@@ -233,7 +233,7 @@ async def skip(ctx: commands.Context):
         return await ctx.reply("You aren't connected to the same voice channel")
 
     track = ctx.voice_client.current
-    ctx.voice_client.stop()
+    await ctx.voice_client.stop()
     await ctx.reply(f"Skipped `{track.title}`.")
 
 @client.command(name="pause", description="Pauses the current track")
@@ -247,7 +247,7 @@ async def pause(ctx: commands.Context):
     if ctx.author.voice.channel.id != ctx.voice_client.channel.id:
         return await ctx.reply("You aren't connected to the same voice channel")
 
-    ctx.voice_client.pause()
+    await ctx.voice_client.pause()
     await ctx.reply("Paused!")
 
 @client.command(name="resume", description="Resumes the current track")
@@ -261,7 +261,7 @@ async def resume(ctx: commands.Context):
     if ctx.author.voice.channel.id != ctx.voice_client.channel.id:
         return await ctx.reply("You aren't connected to the same voice channel")
 
-    ctx.voice_client.resume()
+    await ctx.voice_client.resume()
     await ctx.reply("Resumed!")
 
 @client.command(name="loop", aliases=["repeat"], usage="[forQueue? (true/false)]", description="Loops the current track")

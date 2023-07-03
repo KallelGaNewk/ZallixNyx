@@ -11,16 +11,16 @@ load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
 
-client = commands.Bot(intents=intents, command_prefix='!', help_command=None)
+client = commands.Bot(intents=intents, command_prefix=';', help_command=None)
 enigma = Fernet(os.getenv('FERNET_KEY').encode())
 
 @client.event
 async def on_ready():
     await client.change_presence(
         activity=discord.Activity(
-            type=discord.ActivityType.watching,
-            name="vídeos do carlinhos"),
-        status=discord.Status.do_not_disturb
+            type=discord.ActivityType.listening,
+            name="music"),
+        status=discord.Status.online
     )
 
     address = os.getenv('LAVALINK_IP')
@@ -47,6 +47,7 @@ async def on_command_error(ctx: commands.Context, error):
     elif isinstance(error, commands.CommandOnCooldown):
         await ctx.reply(content=error, delete_after=5, mention_author=True)
     else:
+        print(error)
         encrypted_error = enigma.encrypt(str(error).encode()).decode()
         await ctx.reply(content=f"There's a error. Send this to the developer:\n```Command: {ctx.command.name}\n{encrypted_error}```", mention_author=True)
 
@@ -263,16 +264,30 @@ async def resume(ctx: commands.Context):
     ctx.voice_client.resume()
     await ctx.reply("Resumed!")
 
-@client.command(name="loop", aliases=["repeat"], description="Loops the current track")
-async def loop(ctx: commands.Context):
+@client.command(name="loop", aliases=["repeat"], usage="[forQueue? (true/false)]", description="Loops the current track")
+async def loop(ctx: commands.Context, forQueue: bool = False):
     if not ctx.voice_client:
         return await ctx.reply("I'm not connected to a voice channel")
 
     if not ctx.voice_client.is_playing():
         return await ctx.reply("I'm not playing anything")
 
-    ctx.voice_client.queue.loop = not ctx.voice_client.queue.loop
-    await ctx.reply(f"Looping {'enabled' if ctx.voice_client.loop else 'disabled'} for the queue")
+    if ctx.author.voice.channel.id != ctx.voice_client.channel.id:
+        return await ctx.reply("You aren't connected to the same voice channel")
+
+    if forQueue:
+        if not ctx.voice_client.queue:
+            return await ctx.reply("The queue is empty")
+
+        if ctx.voice_client.queue.loop:
+            ctx.voice_client.queue.loop = False
+            await ctx.reply("Disabled track looping!")
+
+        ctx.voice_client.queue.loop_all = not ctx.voice_client.queue.loop_all
+        await ctx.reply(f"Looping {'enabled' if ctx.voice_client.queue.loop_all else 'disabled'} for the queue")
+    else:
+        ctx.voice_client.queue.loop = not ctx.voice_client.queue.loop
+        await ctx.reply(f"Looping {'enabled' if ctx.voice_client.queue.loop else 'disabled'} for this track")
 
 token = os.getenv('DISCORD_TOKEN')
 
